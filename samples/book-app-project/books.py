@@ -1,4 +1,5 @@
 import json
+import unicodedata
 from dataclasses import dataclass, asdict
 from typing import List, Optional
 
@@ -44,9 +45,18 @@ class BookCollection:
     def list_books(self) -> List[Book]:
         return self.books
 
+    def _normalize(self, s: str) -> str:
+        """Normalize strings for comparisons (NFC, strip, casefold)."""
+        if s is None:
+            return ""
+        return unicodedata.normalize("NFC", s).strip().casefold()
+
     def find_book_by_title(self, title: str) -> Optional[Book]:
+        query = self._normalize(title)
+        if not query:
+            return None
         for book in self.books:
-            if book.title.lower() == title.lower():
+            if self._normalize(book.title) == query:
                 return book
         return None
 
@@ -58,14 +68,23 @@ class BookCollection:
             return True
         return False
 
-    def remove_book(self, title: str) -> bool:
-        """Remove a book by title."""
+    def remove_book(self, title: str) -> Optional[Book]:
+        """Remove a book by title (case-insensitive).
+
+        Returns the removed Book if successful, or None if no match was found.
+        """
         book = self.find_book_by_title(title)
         if book:
+            # remove from in-memory list first
             self.books.remove(book)
-            self.save_books()
-            return True
-        return False
+            try:
+                self.save_books()
+            except Exception:
+                # on failure, restore the book to keep in-memory state consistent
+                self.books.append(book)
+                raise
+            return book
+        return None
 
     def find_by_author(self, author: str) -> List[Book]:
         """Find all books by a given author (case-insensitive, supports partial matches)."""
