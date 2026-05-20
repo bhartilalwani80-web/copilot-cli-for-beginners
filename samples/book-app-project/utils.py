@@ -1,4 +1,4 @@
-def print_menu():
+def display_menu():
     print("\n📚 Book Collection App")
     print("1. Add a book")
     print("2. List books")
@@ -12,25 +12,47 @@ def get_user_choice() -> str:
 
 
 def get_book_details():
+    """Prompt the user for book details and return (title, author, year, warnings).
+
+    Warnings is a list of strings representing non-fatal issues (e.g. 'invalid_year').
+    This function performs input reading and parsing but does not print warnings itself.
+    """
     title = input("Enter book title: ").strip()
     author = input("Enter author: ").strip()
 
     year_input = input("Enter publication year: ").strip()
+    warnings = []
     try:
-        year = int(year_input)
+        year = int(year_input) if year_input else 0
     except ValueError:
-        print("Invalid year. Defaulting to 0.")
         year = 0
+        warnings.append("invalid_year")
 
-    return title, author, year
+    return title, author, year, warnings
 
 
-def print_books(books):
+def show_books(books):
     if not books:
         print("No books in your collection.")
         return
 
     print("\nYour Books:")
     for index, book in enumerate(books, start=1):
-        status = "✅ Read" if book.read else "📖 Unread"
-        print(f"{index}. {book.title} by {book.author} ({book.year}) - {status}")
+        status = "✅ Read" if getattr(book, "read", False) else "📖 Unread"
+        title = getattr(book, "title", "<unknown>")
+        author = getattr(book, "author", "<unknown>")
+        year = getattr(book, "year", "?")
+        print(f"{index}. {title} by {author} ({year}) - {status}")
+
+
+# Display helpers
+def display_message(msg: str):
+    print(msg)
+
+
+def display_error(msg: str):
+    print(f"Error: {msg}")
+
+
+# Backwards compatibility
+print_books = show_books

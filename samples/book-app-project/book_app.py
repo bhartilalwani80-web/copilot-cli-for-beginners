@@ -6,20 +6,7 @@ from books import BookCollection
 collection = BookCollection()
 
 
-def show_books(books):
-    """Display books in a user-friendly format."""
-    if not books:
-        print("No books found.")
-        return
-
-    print("\nYour Book Collection:\n")
-
-    for index, book in enumerate(books, start=1):
-        status = "✓" if book.read else " "
-        print(f"{index}. [{status}] {book.title} by {book.author} ({book.year})")
-
-    print()
-
+from utils import show_books, get_book_details, display_message, display_error
 
 def handle_list():
     books = collection.list_books()
@@ -27,27 +14,35 @@ def handle_list():
 
 
 def handle_add():
-    print("\nAdd a New Book\n")
+    display_message("\nAdd a New Book\n")
 
-    title = input("Title: ").strip()
-    author = input("Author: ").strip()
-    year_str = input("Year: ").strip()
+    title, author, year, warnings = get_book_details()
 
-    try:
-        year = int(year_str) if year_str else 0
-        collection.add_book(title, author, year)
-        print("\nBook added successfully.\n")
-    except ValueError as e:
-        print(f"\nError: {e}\n")
+    if not title or not author:
+        display_error("Title and author are required.")
+        return
+
+    collection.add_book(title, author, year)
+
+    if "invalid_year" in warnings:
+        display_message("Invalid year input; defaulted to 0.")
+
+    display_message("\nBook added successfully.\n")
 
 
 def handle_remove():
-    print("\nRemove a Book\n")
+    display_message("\nRemove a Book\n")
 
     title = input("Enter the title of the book to remove: ").strip()
-    collection.remove_book(title)
+    if not title:
+        display_error("Title is required.")
+        return
 
-    print("\nBook removed if it existed.\n")
+    removed = collection.remove_book(title)
+    if removed:
+        display_message("\nBook removed successfully.\n")
+    else:
+        display_message("\nBook not found.\n")
 
 
 def handle_find():
